@@ -105,8 +105,27 @@ function Index() {
   }, [fetchAll]);
 
   useEffect(() => {
+    const handleChange = (payload: {
+      eventType: string;
+      new: Record<string, unknown>;
+      old: Record<string, unknown>;
+    }) => {
+      const id = (payload.new as { id?: string }).id;
+      if (
+        payload.eventType === "UPDATE" &&
+        (payload.new as { done?: boolean }).done &&
+        !(payload.old as { done?: boolean }).done &&
+        !(id && selfCompletedRef.current.has(id))
+      ) {
+        celebrateRef.current();
+      }
+      if (id) selfCompletedRef.current.delete(id);
+      void fetchAll();
+    };
+
     const channel = supabase
       .channel("bub-sync")
+
       .on("postgres_changes", { event: "*", schema: "public", table: "chores" }, (payload) => {
         handleChange(payload);
       })
