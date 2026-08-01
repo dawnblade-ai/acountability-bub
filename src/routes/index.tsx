@@ -191,8 +191,10 @@ function Index() {
     const target = state[t][index];
     setPending(null);
     if (!target) return;
+    selfCompletedRef.current.add(target.id);
     celebrate();
     await supabase.from(t).update({ done: true, completed_by: person }).eq("id", target.id);
+
     await fetchAll();
   };
 
