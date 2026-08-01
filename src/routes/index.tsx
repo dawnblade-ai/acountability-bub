@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,31 +26,43 @@ export const Route = createFileRoute("/")({
 type Tab = "chores" | "purchases";
 
 type Item = {
+  id: string;
   title: string;
   assignee: string;
-  dueDate?: string;
-  cost?: string;
-  store?: string;
+  dueDate?: string | undefined;
+  cost?: string | undefined;
+  store?: string | undefined;
   done: boolean;
-  completedBy?: string;
+  completedBy?: string | undefined;
 };
+
 
 type State = Record<Tab, Item[]>;
 
 const PEOPLE = ["David", "Arden", "Bub&Bub"];
-const STORAGE_KEYS: Record<Tab, string> = {
-  chores: "bub_chores_v2",
-  purchases: "bub_purchases_v2",
+
+type Row = {
+  id: string;
+  title: string;
+  assignee: string | null;
+  due_date: string | null;
+  cost?: number | null;
+  store?: string | null;
+  done: boolean;
+  completed_by: string | null;
 };
 
-function load(tab: Tab): Item[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS[tab]);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? (parsed as Item[]) : [];
-  } catch {
-    return [];
-  }
+function toItem(row: Row): Item {
+  return {
+    id: row.id,
+    title: row.title,
+    assignee: row.assignee ?? "Any",
+    dueDate: row.due_date ?? "",
+    cost: row.cost != null ? String(row.cost) : "",
+    store: row.store ?? "",
+    done: row.done,
+    completedBy: row.completed_by ?? undefined,
+  };
 }
 
 function formatDateTime(dt?: string) {
@@ -67,7 +80,6 @@ type Bubble = { id: number; left: number; size: number; duration: number };
 
 function Index() {
   const [tab, setTab] = useState<Tab>("chores");
-  const [hydrated, setHydrated] = useState(false);
   const [state, setState] = useState<State>({ chores: [], purchases: [] });
   const [formOpen, setFormOpen] = useState<Record<Tab, boolean>>({
     chores: false,
@@ -75,17 +87,60 @@ function Index() {
   });
   const [pending, setPending] = useState<{ tab: Tab; index: number } | null>(null);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
+  const celebrateRef = useRef<() => void>(() => {});
+  const selfCompletedRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    setState({ chores: load("chores"), purchases: load("purchases") });
-    setHydrated(true);
+
+  const fetchAll = useCallback(async () => {
+    const [chores, purchases] = await Promise.all([
+      supabase.from("chores").select("*").order("created_at", { ascending: false }),
+      supabase.from("purchases").select("*").order("created_at", { ascending: false }),
+    ]);
+    setState({
+      chores: (chores.data ?? []).map((r) => toItem(r as Row)),
+      purchases: (purchases.data ?? []).map((r) => toItem(r as Row)),
+    });
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEYS.chores, JSON.stringify(state.chores));
-    localStorage.setItem(STORAGE_KEYS.purchases, JSON.stringify(state.purchases));
-  }, [state, hydrated]);
+    void fetchAll();
+  }, [fetchAll]);
+
+  useEffect(() => {
+    const handleChange = (payload: {
+      eventType: string;
+      new: Record<string, unknown>;
+      old: Record<string, unknown>;
+    }) => {
+      const id = (payload.new as { id?: string }).id;
+      if (
+        payload.eventType === "UPDATE" &&
+        (payload.new as { done?: boolean }).done &&
+        !(payload.old as { done?: boolean }).done &&
+        !(id && selfCompletedRef.current.has(id))
+      ) {
+        celebrateRef.current();
+      }
+      if (id) selfCompletedRef.current.delete(id);
+      void fetchAll();
+    };
+
+    const channel = supabase
+      .channel("bub-sync")
+
+      .on("postgres_changes", { event: "*", schema: "public", table: "chores" }, (payload) => {
+        handleChange(payload);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "purchases" }, (payload) => {
+        handleChange(payload);
+      })
+
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [fetchAll]);
 
   const celebrate = () => {
     const base = Date.now();
@@ -100,33 +155,53 @@ function Index() {
       setBubbles((prev) => prev.filter((b) => !next.some((n) => n.id === b.id)));
     }, 4000);
   };
+  celebrateRef.current = celebrate;
 
-  const addItem = (t: Tab, item: Item) => {
-    setState((prev) => ({ ...prev, [t]: [item, ...prev[t]] }));
+  const addItem = async (t: Tab, item: Omit<Item, "id">) => {
     setFormOpen((prev) => ({ ...prev, [t]: false }));
+    const base = {
+      title: item.title,
+      assignee: item.assignee,
+      due_date: item.dueDate ? new Date(item.dueDate).toISOString() : null,
+      done: false,
+    };
+    if (t === "chores") {
+      await supabase.from("chores").insert(base);
+    } else {
+      await supabase.from("purchases").insert({
+        ...base,
+        cost: item.cost ? Number(item.cost) : null,
+        store: item.store || null,
+      });
+    }
+    await fetchAll();
   };
 
-  const deleteItem = (t: Tab, index: number) => {
+  const deleteItem = async (t: Tab, index: number) => {
+    const target = state[t][index];
+    if (!target) return;
     setState((prev) => ({ ...prev, [t]: prev[t].filter((_, i) => i !== index) }));
+    await supabase.from(t).delete().eq("id", target.id);
+    await fetchAll();
   };
 
-  const confirmCompletion = (person: string) => {
+  const confirmCompletion = async (person: string) => {
     if (!pending) return;
     const { tab: t, index } = pending;
-    setState((prev) => {
-      const list = [...prev[t]];
-      const [item] = list.splice(index, 1);
-      if (!item) return prev;
-      list.push({ ...item, done: true, completedBy: person });
-      return { ...prev, [t]: list };
-    });
+    const target = state[t][index];
     setPending(null);
+    if (!target) return;
+    selfCompletedRef.current.add(target.id);
     celebrate();
+    await supabase.from(t).update({ done: true, completed_by: person }).eq("id", target.id);
+
+    await fetchAll();
   };
 
   const list = state[tab];
   const active = list.map((item, index) => ({ item, index })).filter((x) => !x.item.done);
   const completed = list.map((item, index) => ({ item, index })).filter((x) => x.item.done);
+
 
   const renderList = (entries: { item: Item; index: number }[], emptyText: string) => (
     <ul className="m-0 list-none p-0">
