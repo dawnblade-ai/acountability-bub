@@ -94,8 +94,10 @@ function Index() {
   const toggle = (index: number) => {
     setItems((prev) => {
       const next = [...prev[tab]];
-      const [item] = next.splice(index, 1);
-      const updated = { ...item, done: !item.done };
+      const item = next[index];
+      if (!item) return prev;
+      next.splice(index, 1);
+      const updated: Item = { ...item, done: !item.done };
       if (updated.done) next.push(updated);
       else next.unshift(updated);
       return { ...prev, [tab]: next };
