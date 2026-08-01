@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Accountability Bub — Roommate Chores & Purchases" },
       {
         property: "og:description",
-        content: "A calm shared checklist for household chores and purchases.",
+        content: "A calm shared checklist for household chores and purchases. Breathe, record your wins, plan the future.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

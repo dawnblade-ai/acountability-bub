@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Accountability Bub — Roommate Chores & Purchases" },
+      { name: "description", content: "A calm shared checklist for household chores and purchases. Breathe, record your wins, plan the future." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Accountability Bub — Roommate Chores & Purchases" },
+      { property: "og:description", content: "A calm shared checklist for household chores and purchases. Breathe, record your wins, plan the future." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Accountability Bub — Roommate Chores & Purchases" },
+      { name: "twitter:description", content: "A calm shared checklist for household chores and purchases. Breathe, record your wins, plan the future." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/61255f2b-6368-4ef7-8e2f-452d6ae7a541/id-preview-95ae7fe9--a741b152-4f9a-463d-a43b-1b2275af1a50.lovable.app-1785602606432.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/61255f2b-6368-4ef7-8e2f-452d6ae7a541/id-preview-95ae7fe9--a741b152-4f9a-463d-a43b-1b2275af1a50.lovable.app-1785602606432.png" },
     ],
     links: [
       {
