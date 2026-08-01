@@ -108,25 +108,12 @@ function Index() {
     const channel = supabase
       .channel("bub-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "chores" }, (payload) => {
-        if (
-          payload.eventType === "UPDATE" &&
-          (payload.new as Row).done &&
-          !(payload.old as Row | null)?.done
-        ) {
-          celebrateRef.current();
-        }
-        void fetchAll();
+        handleChange(payload);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "purchases" }, (payload) => {
-        if (
-          payload.eventType === "UPDATE" &&
-          (payload.new as Row).done &&
-          !(payload.old as Row | null)?.done
-        ) {
-          celebrateRef.current();
-        }
-        void fetchAll();
+        handleChange(payload);
       })
+
       .subscribe();
 
     return () => {
