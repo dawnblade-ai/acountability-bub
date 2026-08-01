@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chores: {
+        Row: {
+          assignee: string
+          completed_by: string | null
+          created_at: string
+          done: boolean
+          due_date: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          assignee?: string
+          completed_by?: string | null
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          assignee?: string
+          completed_by?: string | null
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          assignee: string
+          completed_by: string | null
+          cost: number | null
+          created_at: string
+          done: boolean
+          due_date: string | null
+          id: string
+          store: string | null
+          title: string
+        }
+        Insert: {
+          assignee?: string
+          completed_by?: string | null
+          cost?: number | null
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          store?: string | null
+          title: string
+        }
+        Update: {
+          assignee?: string
+          completed_by?: string | null
+          cost?: number | null
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          id?: string
+          store?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
