@@ -88,6 +88,8 @@ function Index() {
   const [pending, setPending] = useState<{ tab: Tab; index: number } | null>(null);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const celebrateRef = useRef<() => void>(() => {});
+  const selfCompletedRef = useRef<Set<string>>(new Set());
+
 
   const fetchAll = useCallback(async () => {
     const [chores, purchases] = await Promise.all([
