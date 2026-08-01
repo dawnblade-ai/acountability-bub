@@ -29,12 +29,13 @@ type Item = {
   id: string;
   title: string;
   assignee: string;
-  dueDate?: string;
-  cost?: string;
-  store?: string;
+  dueDate?: string | undefined;
+  cost?: string | undefined;
+  store?: string | undefined;
   done: boolean;
-  completedBy?: string;
+  completedBy?: string | undefined;
 };
+
 
 type State = Record<Tab, Item[]>;
 
