@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SlipUpTracker } from "@/components/SlipUpTracker";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -276,6 +277,9 @@ function Index() {
       <p className="mt-1 mb-6 text-center text-sm text-muted-foreground">
         Breathe. Record your wins. Plan the future.
       </p>
+
+      <SlipUpTracker />
+
 
       <div className="w-full max-w-md">
         <div className="flex overflow-hidden rounded-xl bg-card shadow-soft">
