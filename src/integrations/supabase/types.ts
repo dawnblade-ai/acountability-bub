@@ -80,6 +80,30 @@ export type Database = {
         }
         Relationships: []
       }
+      slip_ups: {
+        Row: {
+          created_at: string
+          id: string
+          last_slip_timestamp: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_slip_timestamp?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_slip_timestamp?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
