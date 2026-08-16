@@ -70,9 +70,11 @@ function Section({
     <section id={id} className="mb-8 scroll-mt-6 rounded-2xl border border-border bg-card p-6 shadow-card">
       <h2 className="mb-5 border-b-2 border-border pb-3 text-2xl font-semibold">{title}</h2>
       {children}
+      <GuideNotes sectionId={id} />
     </section>
   );
 }
+
 
 const steps = "list-decimal space-y-4 pl-5 marker:font-semibold marker:text-primary";
 const bullets = "list-disc space-y-2 pl-5 text-sm";
