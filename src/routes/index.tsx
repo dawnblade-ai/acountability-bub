@@ -274,9 +274,15 @@ function Index() {
       <style>{`@keyframes bubbleFloat{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-110vh) scale(1.5);opacity:0}}`}</style>
 
       <h1 className="text-center text-3xl font-light tracking-wide">Accountability Bub</h1>
-      <p className="mt-1 mb-6 text-center text-sm text-muted-foreground">
+      <p className="mt-1 text-center text-sm text-muted-foreground">
         Breathe. Record your wins. Plan the future.
       </p>
+      <Link
+        to="/guide"
+        className="mt-3 mb-6 rounded-full border border-border bg-card px-4 py-2 text-sm text-primary shadow-card"
+      >
+        🪵 Coffee Table Refinishing Guide
+      </Link>
 
       <SlipUpTracker />
 
