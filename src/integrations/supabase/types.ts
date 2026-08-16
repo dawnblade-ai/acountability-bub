@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      guide_notes: {
+        Row: {
+          author: string | null
+          content: string
+          created_at: string
+          id: string
+          section_id: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          section_id: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          section_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           assignee: string
