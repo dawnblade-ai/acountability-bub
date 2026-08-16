@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { GuideNotes } from "@/components/GuideNotes";
+
 
 export const Route = createFileRoute("/guide")({
   head: () => ({
