@@ -286,15 +286,31 @@ export function Cookbook() {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-center">
             <button
               type="submit"
               disabled={status === "saving"}
               className="rounded-full bg-primary px-8 py-3 text-lg font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
-              {status === "saving" ? "Saving..." : status === "saved" ? "Added to Cookbook! 🎉" : "Save to Cookbook"}
+              {status === "saving"
+                ? "Saving..."
+                : status === "saved"
+                  ? "Saved! 🎉"
+                  : editingId
+                    ? "Update Recipe"
+                    : "Save to Cookbook"}
             </button>
+            {editingId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-full border border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+              >
+                Cancel edit
+              </button>
+            ) : null}
           </div>
+
         </form>
 
         <h2 className="mb-4 text-xl font-semibold">Saved Recipes</h2>
