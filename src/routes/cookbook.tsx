@@ -57,7 +57,9 @@ export function Cookbook() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([emptyIngredient()]);
   const [steps, setSteps] = useState<Step[]>([emptyStep()]);
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
 
   const fetchRecipes = useCallback(async () => {
     const { data } = await supabase
