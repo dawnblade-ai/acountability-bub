@@ -107,30 +107,52 @@ export function Cookbook() {
       .filter((step) => step.instruction.trim())
       .map((step, index) => ({ stepNumber: index + 1, instruction: step.instruction.trim() }));
 
-    if (!title.trim() || cleanIngredients.length === 0 || cleanSteps.length === 0) return;
+    if (!title.trim()) return;
 
     setStatus("saving");
-    await supabase.from("recipes").insert({
+    const payload = {
       title: title.trim(),
       description: description.trim() || null,
       ingredients: cleanIngredients,
       steps: cleanSteps,
-    });
+    };
 
-    setTitle("");
-    setDescription("");
-    setIngredients([emptyIngredient()]);
-    setSteps([emptyStep()]);
+    if (editingId) {
+      await supabase.from("recipes").update(payload).eq("id", editingId);
+    } else {
+      await supabase.from("recipes").insert(payload);
+    }
+
+    resetForm();
     setStatus("saved");
     setTimeout(() => setStatus("idle"), 2000);
     await fetchRecipes();
   };
 
+  const resetForm = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setIngredients([emptyIngredient()]);
+    setSteps([emptyStep()]);
+  };
+
+  const startEditing = (recipe: Recipe) => {
+    setEditingId(recipe.id);
+    setTitle(recipe.title);
+    setDescription(recipe.description ?? "");
+    setIngredients(recipe.ingredients.length ? recipe.ingredients : [emptyIngredient()]);
+    setSteps(recipe.steps.length ? recipe.steps : [emptyStep()]);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const deleteRecipe = async (id: string) => {
     setRecipes((prev) => prev.filter((r) => r.id !== id));
+    if (editingId === id) resetForm();
     await supabase.from("recipes").delete().eq("id", id);
     await fetchRecipes();
   };
+
 
   return (
     <main className="min-h-screen bg-background px-5 py-8 text-foreground">
