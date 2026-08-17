@@ -57,7 +57,9 @@ export function Cookbook() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([emptyIngredient()]);
   const [steps, setSteps] = useState<Step[]>([emptyStep()]);
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
 
   const fetchRecipes = useCallback(async () => {
     const { data } = await supabase
@@ -105,30 +107,52 @@ export function Cookbook() {
       .filter((step) => step.instruction.trim())
       .map((step, index) => ({ stepNumber: index + 1, instruction: step.instruction.trim() }));
 
-    if (!title.trim() || cleanIngredients.length === 0 || cleanSteps.length === 0) return;
+    if (!title.trim()) return;
 
     setStatus("saving");
-    await supabase.from("recipes").insert({
+    const payload = {
       title: title.trim(),
       description: description.trim() || null,
       ingredients: cleanIngredients,
       steps: cleanSteps,
-    });
+    };
 
-    setTitle("");
-    setDescription("");
-    setIngredients([emptyIngredient()]);
-    setSteps([emptyStep()]);
+    if (editingId) {
+      await supabase.from("recipes").update(payload).eq("id", editingId);
+    } else {
+      await supabase.from("recipes").insert(payload);
+    }
+
+    resetForm();
     setStatus("saved");
     setTimeout(() => setStatus("idle"), 2000);
     await fetchRecipes();
   };
 
+  const resetForm = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setIngredients([emptyIngredient()]);
+    setSteps([emptyStep()]);
+  };
+
+  const startEditing = (recipe: Recipe) => {
+    setEditingId(recipe.id);
+    setTitle(recipe.title);
+    setDescription(recipe.description ?? "");
+    setIngredients(recipe.ingredients.length ? recipe.ingredients : [emptyIngredient()]);
+    setSteps(recipe.steps.length ? recipe.steps : [emptyStep()]);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const deleteRecipe = async (id: string) => {
     setRecipes((prev) => prev.filter((r) => r.id !== id));
+    if (editingId === id) resetForm();
     await supabase.from("recipes").delete().eq("id", id);
     await fetchRecipes();
   };
+
 
   return (
     <main className="min-h-screen bg-background px-5 py-8 text-foreground">
@@ -199,7 +223,8 @@ export function Cookbook() {
                       value={ing.name}
                       onChange={(e) => updateIngredient(index, { name: e.target.value })}
                       placeholder="Ingredient (e.g., shredded cheese)"
-                      required
+                      
+
                       className="min-w-[200px] flex-[2] rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary"
                     />
                   </div>
@@ -238,7 +263,8 @@ export function Cookbook() {
                     onChange={(e) => updateStep(index, e.target.value)}
                     placeholder="Describe this step..."
                     rows={2}
-                    required
+                    
+
                     className="min-w-0 flex-1 resize-y rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary"
                   />
                   <button
@@ -260,15 +286,31 @@ export function Cookbook() {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-center">
             <button
               type="submit"
               disabled={status === "saving"}
               className="rounded-full bg-primary px-8 py-3 text-lg font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
-              {status === "saving" ? "Saving..." : status === "saved" ? "Added to Cookbook! 🎉" : "Save to Cookbook"}
+              {status === "saving"
+                ? "Saving..."
+                : status === "saved"
+                  ? "Saved! 🎉"
+                  : editingId
+                    ? "Update Recipe"
+                    : "Save to Cookbook"}
             </button>
+            {editingId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-full border border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+              >
+                Cancel edit
+              </button>
+            ) : null}
           </div>
+
         </form>
 
         <h2 className="mb-4 text-xl font-semibold">Saved Recipes</h2>
@@ -289,6 +331,14 @@ export function Cookbook() {
                     ) : null}
                   </div>
                   <button
+                    onClick={() => startEditing(recipe)}
+                    className="text-sm font-medium text-primary underline"
+                    aria-label="Edit recipe"
+                  >
+                    Edit
+                  </button>
+                  <button
+
                     onClick={() => deleteRecipe(recipe.id)}
                     className="text-sm text-muted-foreground transition-colors hover:text-destructive"
                     aria-label="Delete recipe"
