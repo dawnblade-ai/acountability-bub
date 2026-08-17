@@ -331,6 +331,14 @@ export function Cookbook() {
                     ) : null}
                   </div>
                   <button
+                    onClick={() => startEditing(recipe)}
+                    className="text-sm font-medium text-primary underline"
+                    aria-label="Edit recipe"
+                  >
+                    Edit
+                  </button>
+                  <button
+
                     onClick={() => deleteRecipe(recipe.id)}
                     className="text-sm text-muted-foreground transition-colors hover:text-destructive"
                     aria-label="Delete recipe"
