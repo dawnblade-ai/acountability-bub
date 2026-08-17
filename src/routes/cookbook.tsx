@@ -223,7 +223,8 @@ export function Cookbook() {
                       value={ing.name}
                       onChange={(e) => updateIngredient(index, { name: e.target.value })}
                       placeholder="Ingredient (e.g., shredded cheese)"
-                      required
+                      
+
                       className="min-w-[200px] flex-[2] rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary"
                     />
                   </div>
