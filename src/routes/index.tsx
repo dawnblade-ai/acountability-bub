@@ -285,10 +285,17 @@ function Index() {
       </Link>
       <Link
         to="/cookbook"
-        className="mb-6 rounded-full border border-border bg-card px-4 py-2 text-sm text-primary shadow-card"
+        className="mb-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-primary shadow-card"
       >
         🍲 Bubby's Cookbook
       </Link>
+      <Link
+        to="/puppy"
+        className="mb-6 rounded-full border border-border bg-card px-4 py-2 text-sm text-primary shadow-card"
+      >
+        🐶 Maybe's Care Guide
+      </Link>
+
 
       <SlipUpTracker />
 
