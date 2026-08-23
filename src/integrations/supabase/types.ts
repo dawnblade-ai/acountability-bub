@@ -71,6 +71,60 @@ export type Database = {
         }
         Relationships: []
       }
+      puppy_checklist: {
+        Row: {
+          checked: boolean
+          created_at: string
+          id: string
+          item_key: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          created_at?: string
+          id?: string
+          item_key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          created_at?: string
+          id?: string
+          item_key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      puppy_names: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          votes: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          votes?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          votes?: number
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           assignee: string
