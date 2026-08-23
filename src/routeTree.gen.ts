@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CookbookRouteImport } from './routes/cookbook'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as PuppyRouteImport } from './routes/puppy'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const GuideRoute = GuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PuppyRoute = PuppyRouteImport.update({
+  id: '/puppy',
+  path: '/puppy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cookbook': typeof CookbookRoute
   '/guide': typeof GuideRoute
+  '/puppy': typeof PuppyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cookbook': typeof CookbookRoute
   '/guide': typeof GuideRoute
+  '/puppy': typeof PuppyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cookbook': typeof CookbookRoute
   '/guide': typeof GuideRoute
+  '/puppy': typeof PuppyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cookbook' | '/guide'
+  fullPaths: '/' | '/cookbook' | '/guide' | '/puppy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cookbook' | '/guide'
-  id: '__root__' | '/' | '/cookbook' | '/guide'
+  to: '/' | '/cookbook' | '/guide' | '/puppy'
+  id: '__root__' | '/' | '/cookbook' | '/guide' | '/puppy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CookbookRoute: typeof CookbookRoute
   GuideRoute: typeof GuideRoute
+  PuppyRoute: typeof PuppyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/puppy': {
+      id: '/puppy'
+      path: '/puppy'
+      fullPath: '/puppy'
+      preLoaderRoute: typeof PuppyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CookbookRoute: CookbookRoute,
   GuideRoute: GuideRoute,
+  PuppyRoute: PuppyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
