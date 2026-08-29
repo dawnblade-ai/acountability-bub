@@ -372,16 +372,19 @@ function Index() {
           + Add New {tab === "chores" ? "Chore" : "Purchase"}
         </button>
 
-        {formOpen[tab] && (
+        {(formOpen[tab] || (editing && editing.tab === tab)) && (() => {
+          const editTarget = editing && editing.tab === tab ? state[tab][editing.index] : undefined;
+          if (editing && !editTarget) return null;
+          return (
           <form
-            key={tab}
+            key={`${tab}-${editTarget?.id ?? "new"}`}
             onSubmit={(e) => {
               e.preventDefault();
               const f = e.currentTarget;
               const data = new FormData(f);
               const title = String(data.get("title") ?? "").trim();
               if (!title) return;
-              addItem(tab, {
+              const payload = {
                 title,
                 assignee: String(data.get("assignee") ?? "Any"),
                 dueDate: String(data.get("dueDate") ?? ""),
@@ -392,11 +395,28 @@ function Index() {
                     }
                   : {}),
                 done: false,
-              });
-              f.reset();
+              };
+              if (editTarget) {
+                updateItem(tab, editTarget.id, payload);
+              } else {
+                addItem(tab, payload);
+                f.reset();
+              }
             }}
             className="mt-5 rounded-lg bg-card p-4 shadow-soft"
           >
+            {editTarget && (
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">Editing: {editTarget.title}</span>
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="text-xs text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
             <label className="mb-3 flex flex-col">
               <span className="mb-1 text-xs text-muted-foreground">
                 {tab === "chores" ? "Chore Name" : "Item Name"}
