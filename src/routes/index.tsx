@@ -87,6 +87,7 @@ function Index() {
     purchases: false,
   });
   const [pending, setPending] = useState<{ tab: Tab; index: number } | null>(null);
+  const [editing, setEditing] = useState<{ tab: Tab; index: number } | null>(null);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const celebrateRef = useRef<() => void>(() => {});
   const selfCompletedRef = useRef<Set<string>>(new Set());
@@ -178,6 +179,36 @@ function Index() {
     await fetchAll();
   };
 
+  const updateItem = async (t: Tab, id: string, item: Omit<Item, "id">) => {
+    setEditing(null);
+    const base = {
+      title: item.title,
+      assignee: item.assignee,
+      due_date: item.dueDate ? new Date(item.dueDate).toISOString() : null,
+    };
+    if (t === "chores") {
+      await supabase.from("chores").update(base).eq("id", id);
+    } else {
+      await supabase
+        .from("purchases")
+        .update({ ...base, cost: item.cost ? Number(item.cost) : null, store: item.store || null })
+        .eq("id", id);
+    }
+    await fetchAll();
+  };
+
+  const buyAgain = async (item: Item) => {
+    await supabase.from("purchases").insert({
+      title: item.title,
+      assignee: item.assignee,
+      due_date: null,
+      cost: item.cost ? Number(item.cost) : null,
+      store: item.store || null,
+      done: false,
+    });
+    await fetchAll();
+  };
+
   const deleteItem = async (t: Tab, index: number) => {
     const target = state[t][index];
     if (!target) return;
@@ -248,7 +279,15 @@ function Index() {
               </span>
             )}
           </div>
-          <div className="mt-3 flex justify-end gap-2">
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            {item.done && tab === "purchases" && (
+              <button
+                onClick={() => buyAgain(item)}
+                className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
+              >
+                🔁 Buy again
+              </button>
+            )}
             {!item.done && (
               <button
                 onClick={() => setPending({ tab, index })}
@@ -257,6 +296,15 @@ function Index() {
                 ✓ Complete
               </button>
             )}
+            <button
+              onClick={() => {
+                setFormOpen((p) => ({ ...p, [tab]: false }));
+                setEditing({ tab, index });
+              }}
+              className="rounded bg-secondary px-3 py-1.5 text-sm text-foreground"
+            >
+              Edit
+            </button>
             <button
               onClick={() => deleteItem(tab, index)}
               className="rounded bg-secondary px-3 py-1.5 text-sm text-destructive"
@@ -324,16 +372,19 @@ function Index() {
           + Add New {tab === "chores" ? "Chore" : "Purchase"}
         </button>
 
-        {formOpen[tab] && (
+        {(formOpen[tab] || (editing && editing.tab === tab)) && (() => {
+          const editTarget = editing && editing.tab === tab ? state[tab][editing.index] : undefined;
+          if (editing && !editTarget) return null;
+          return (
           <form
-            key={tab}
+            key={`${tab}-${editTarget?.id ?? "new"}`}
             onSubmit={(e) => {
               e.preventDefault();
               const f = e.currentTarget;
               const data = new FormData(f);
               const title = String(data.get("title") ?? "").trim();
               if (!title) return;
-              addItem(tab, {
+              const payload = {
                 title,
                 assignee: String(data.get("assignee") ?? "Any"),
                 dueDate: String(data.get("dueDate") ?? ""),
@@ -344,11 +395,28 @@ function Index() {
                     }
                   : {}),
                 done: false,
-              });
-              f.reset();
+              };
+              if (editTarget) {
+                updateItem(tab, editTarget.id, payload);
+              } else {
+                addItem(tab, payload);
+                f.reset();
+              }
             }}
             className="mt-5 rounded-lg bg-card p-4 shadow-soft"
           >
+            {editTarget && (
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">Editing: {editTarget.title}</span>
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="text-xs text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
             <label className="mb-3 flex flex-col">
               <span className="mb-1 text-xs text-muted-foreground">
                 {tab === "chores" ? "Chore Name" : "Item Name"}
@@ -357,6 +425,7 @@ function Index() {
                 name="title"
                 type="text"
                 autoComplete="off"
+                defaultValue={editTarget?.title ?? ""}
                 placeholder={tab === "chores" ? "e.g., Tame the dish mountain" : "e.g., Cat food"}
                 className="rounded-md border border-border bg-background px-3 py-2 outline-none"
               />
@@ -368,7 +437,7 @@ function Index() {
               </span>
               <select
                 name="assignee"
-                defaultValue="Any"
+                defaultValue={editTarget?.assignee ?? "Any"}
                 className="rounded-md border border-border bg-background px-3 py-2 outline-none"
               >
                 <option value="Any">Anyone</option>
@@ -388,6 +457,7 @@ function Index() {
                     name="cost"
                     type="number"
                     step="0.01"
+                    defaultValue={editTarget?.cost ?? ""}
                     placeholder="e.g., 25.00"
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none"
                   />
@@ -397,6 +467,7 @@ function Index() {
                   <input
                     name="store"
                     type="text"
+                    defaultValue={editTarget?.store ?? ""}
                     placeholder="e.g., Chewy, Target"
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none"
                   />
@@ -411,6 +482,16 @@ function Index() {
               <input
                 name="dueDate"
                 type="datetime-local"
+                defaultValue={
+                  editTarget?.dueDate
+                    ? new Date(
+                        new Date(editTarget.dueDate).getTime() -
+                          new Date(editTarget.dueDate).getTimezoneOffset() * 60000
+                      )
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
+                }
                 className="rounded-md border border-border bg-background px-3 py-2 outline-none"
               />
             </label>
@@ -422,7 +503,8 @@ function Index() {
               Save {tab === "chores" ? "Chore" : "Purchase"}
             </button>
           </form>
-        )}
+          );
+        })()}
 
         <h2 className="mt-6 mb-2 border-b border-border pb-1 text-lg">
           {tab === "chores" ? "To Do" : "To Buy"}
