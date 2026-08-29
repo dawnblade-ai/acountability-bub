@@ -490,7 +490,8 @@ function Index() {
               Save {tab === "chores" ? "Chore" : "Purchase"}
             </button>
           </form>
-        )}
+          );
+        })()}
 
         <h2 className="mt-6 mb-2 border-b border-border pb-1 text-lg">
           {tab === "chores" ? "To Do" : "To Buy"}
