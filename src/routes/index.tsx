@@ -425,6 +425,7 @@ function Index() {
                 name="title"
                 type="text"
                 autoComplete="off"
+                defaultValue={editTarget?.title ?? ""}
                 placeholder={tab === "chores" ? "e.g., Tame the dish mountain" : "e.g., Cat food"}
                 className="rounded-md border border-border bg-background px-3 py-2 outline-none"
               />
@@ -436,7 +437,7 @@ function Index() {
               </span>
               <select
                 name="assignee"
-                defaultValue="Any"
+                defaultValue={editTarget?.assignee ?? "Any"}
                 className="rounded-md border border-border bg-background px-3 py-2 outline-none"
               >
                 <option value="Any">Anyone</option>
@@ -456,6 +457,7 @@ function Index() {
                     name="cost"
                     type="number"
                     step="0.01"
+                    defaultValue={editTarget?.cost ?? ""}
                     placeholder="e.g., 25.00"
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none"
                   />
@@ -465,6 +467,7 @@ function Index() {
                   <input
                     name="store"
                     type="text"
+                    defaultValue={editTarget?.store ?? ""}
                     placeholder="e.g., Chewy, Target"
                     className="rounded-md border border-border bg-background px-3 py-2 outline-none"
                   />
@@ -479,6 +482,16 @@ function Index() {
               <input
                 name="dueDate"
                 type="datetime-local"
+                defaultValue={
+                  editTarget?.dueDate
+                    ? new Date(
+                        new Date(editTarget.dueDate).getTime() -
+                          new Date(editTarget.dueDate).getTimezoneOffset() * 60000
+                      )
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
+                }
                 className="rounded-md border border-border bg-background px-3 py-2 outline-none"
               />
             </label>
