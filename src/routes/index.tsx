@@ -279,7 +279,15 @@ function Index() {
               </span>
             )}
           </div>
-          <div className="mt-3 flex justify-end gap-2">
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            {item.done && tab === "purchases" && (
+              <button
+                onClick={() => buyAgain(item)}
+                className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"
+              >
+                🔁 Buy again
+              </button>
+            )}
             {!item.done && (
               <button
                 onClick={() => setPending({ tab, index })}
@@ -288,6 +296,15 @@ function Index() {
                 ✓ Complete
               </button>
             )}
+            <button
+              onClick={() => {
+                setFormOpen((p) => ({ ...p, [tab]: false }));
+                setEditing({ tab, index });
+              }}
+              className="rounded bg-secondary px-3 py-1.5 text-sm text-foreground"
+            >
+              Edit
+            </button>
             <button
               onClick={() => deleteItem(tab, index)}
               className="rounded bg-secondary px-3 py-1.5 text-sm text-destructive"
