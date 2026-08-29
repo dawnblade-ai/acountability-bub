@@ -87,6 +87,7 @@ function Index() {
     purchases: false,
   });
   const [pending, setPending] = useState<{ tab: Tab; index: number } | null>(null);
+  const [editing, setEditing] = useState<{ tab: Tab; index: number } | null>(null);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const celebrateRef = useRef<() => void>(() => {});
   const selfCompletedRef = useRef<Set<string>>(new Set());
@@ -175,6 +176,36 @@ function Index() {
         store: item.store || null,
       });
     }
+    await fetchAll();
+  };
+
+  const updateItem = async (t: Tab, id: string, item: Omit<Item, "id">) => {
+    setEditing(null);
+    const base = {
+      title: item.title,
+      assignee: item.assignee,
+      due_date: item.dueDate ? new Date(item.dueDate).toISOString() : null,
+    };
+    if (t === "chores") {
+      await supabase.from("chores").update(base).eq("id", id);
+    } else {
+      await supabase
+        .from("purchases")
+        .update({ ...base, cost: item.cost ? Number(item.cost) : null, store: item.store || null })
+        .eq("id", id);
+    }
+    await fetchAll();
+  };
+
+  const buyAgain = async (item: Item) => {
+    await supabase.from("purchases").insert({
+      title: item.title,
+      assignee: item.assignee,
+      due_date: null,
+      cost: item.cost ? Number(item.cost) : null,
+      store: item.store || null,
+      done: false,
+    });
     await fetchAll();
   };
 
