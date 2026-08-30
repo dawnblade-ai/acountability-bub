@@ -148,6 +148,17 @@ export function Cookbook() {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleDeleteClick = (id: string) => {
+    setDeleteStep((prev) => {
+      const step = (prev[id] ?? 0) + 1;
+      if (step >= 3) {
+        void deleteRecipe(id);
+        return { ...prev, [id]: 0 };
+      }
+      return { ...prev, [id]: step };
+    });
+  };
+
   const deleteRecipe = async (id: string) => {
     setRecipes((prev) => prev.filter((r) => r.id !== id));
     if (editingId === id) resetForm();
