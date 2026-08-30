@@ -59,6 +59,8 @@ export function Cookbook() {
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [deleteStep, setDeleteStep] = useState<Record<string, number>>({});
+
 
 
   const fetchRecipes = useCallback(async () => {
