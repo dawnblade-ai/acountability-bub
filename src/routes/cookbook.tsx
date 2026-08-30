@@ -59,6 +59,8 @@ export function Cookbook() {
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [deleteStep, setDeleteStep] = useState<Record<string, number>>({});
+
 
 
   const fetchRecipes = useCallback(async () => {
@@ -144,6 +146,17 @@ export function Cookbook() {
     setIngredients(recipe.ingredients.length ? recipe.ingredients : [emptyIngredient()]);
     setSteps(recipe.steps.length ? recipe.steps : [emptyStep()]);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteStep((prev) => {
+      const step = (prev[id] ?? 0) + 1;
+      if (step >= 3) {
+        void deleteRecipe(id);
+        return { ...prev, [id]: 0 };
+      }
+      return { ...prev, [id]: step };
+    });
   };
 
   const deleteRecipe = async (id: string) => {
@@ -338,12 +351,19 @@ export function Cookbook() {
                     Edit
                   </button>
                   <button
-
-                    onClick={() => deleteRecipe(recipe.id)}
-                    className="text-sm text-muted-foreground transition-colors hover:text-destructive"
+                    onClick={() => handleDeleteClick(recipe.id)}
+                    className={`text-sm font-medium transition-colors ${
+                      deleteStep[recipe.id]
+                        ? "text-destructive"
+                        : "text-muted-foreground hover:text-destructive"
+                    }`}
                     aria-label="Delete recipe"
                   >
-                    ✕
+                    {deleteStep[recipe.id] === 1
+                      ? "Sure?"
+                      : deleteStep[recipe.id] === 2
+                        ? "Really delete?!"
+                        : "✕"}
                   </button>
                 </div>
 
