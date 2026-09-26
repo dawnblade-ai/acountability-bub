@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as CookbookRouteImport } from './routes/cookbook'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as PuppyRouteImport } from './routes/puppy'
@@ -17,6 +18,11 @@ import { Route as PuppyRouteImport } from './routes/puppy'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookbookRoute = CookbookRouteImport.update({
@@ -37,12 +43,14 @@ const PuppyRoute = PuppyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
   '/cookbook': typeof CookbookRoute
   '/guide': typeof GuideRoute
   '/puppy': typeof PuppyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
   '/cookbook': typeof CookbookRoute
   '/guide': typeof GuideRoute
   '/puppy': typeof PuppyRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
   '/cookbook': typeof CookbookRoute
   '/guide': typeof GuideRoute
   '/puppy': typeof PuppyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cookbook' | '/guide' | '/puppy'
+  fullPaths: '/' | '/budget' | '/cookbook' | '/guide' | '/puppy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cookbook' | '/guide' | '/puppy'
-  id: '__root__' | '/' | '/cookbook' | '/guide' | '/puppy'
+  to: '/' | '/budget' | '/cookbook' | '/guide' | '/puppy'
+  id: '__root__' | '/' | '/budget' | '/cookbook' | '/guide' | '/puppy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BudgetRoute: typeof BudgetRoute
   CookbookRoute: typeof CookbookRoute
   GuideRoute: typeof GuideRoute
   PuppyRoute: typeof PuppyRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cookbook': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BudgetRoute: BudgetRoute,
   CookbookRoute: CookbookRoute,
   GuideRoute: GuideRoute,
   PuppyRoute: PuppyRoute,
