@@ -169,6 +169,14 @@ function BudgetPage() {
   const weekExpenses = expenses.filter((e) => e.week_key === weekKey);
   const sinkValFor = (sinkId: string) =>
     sinkVals.find((v) => v.week_key === weekKey && v.sink_id === sinkId)?.amount ?? null;
+  const cumBalFor = (sinkId: string) => {
+    const past = sinkVals
+      .filter((v) => v.sink_id === sinkId && v.week_key < weekKey)
+      .reduce((sum, v) => sum + (Number(v.amount) || 0), 0);
+    const local = localVals[`sink_${sinkId}`];
+    const cur = local !== undefined ? parseFloat(local) || 0 : Number(sinkValFor(sinkId)) || 0;
+    return past + cur;
+  };
 
   const totalOut =
     visibleSinks.reduce((sum, s) => sum + (sinkValFor(s.id) ?? 0), 0) +
@@ -305,16 +313,20 @@ function BudgetPage() {
                   <span className="item-title">{s.name}</span>
                   <span className="sink-badge">Sink</span>
                 </div>
+                <div className="cum-bal">Balance: {fmt.format(cumBalFor(s.id))}</div>
               </div>
               <div className="item-body">
-                <div className="input-wrapper">
-                  <input
-                    type="number"
-                    className="sink-input"
-                    placeholder="0.00"
-                    value={sinkInputVal(s.id)}
-                    onChange={(e) => updateSinkVal(s.id, e.target.value)}
-                  />
+                <div style={{ flex: 1 }}>
+                  <span className="input-label">This week's contribution:</span>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      className="sink-input"
+                      placeholder="0.00"
+                      value={sinkInputVal(s.id)}
+                      onChange={(e) => updateSinkVal(s.id, e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="action-row">
@@ -441,7 +453,9 @@ const BUDGET_CSS = `
 .budget-page input[type="number"] { width: 100%; padding: 0.8rem 0.8rem 0.8rem 2.2rem; border: 2px solid var(--bp-border); border-radius: 10px; font-size: 1.2rem; font-weight: 700; box-sizing: border-box; background: #fff; transition: border-color 0.2s; color: var(--bp-primary); }
 .budget-page input[type="number"]:focus { outline: none; border-color: var(--bp-primary); }
 .budget-page input[type="number"]::placeholder { color: #cbd5e1; }
-.item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+.item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem; }
+.cum-bal { font-weight: 700; color: var(--bp-primary); font-size: 0.95rem; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; margin-top: 4px; display: inline-block; }
+.input-label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--bp-secondary); margin-bottom: 0.4rem; }
 .item-title { font-weight: 700; font-size: 1.1rem; }
 .sink-badge { background: #e0e7ff; color: var(--bp-sink); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; text-transform: uppercase; font-weight: 800; }
 .item-body { display: flex; gap: 1rem; align-items: center; }
