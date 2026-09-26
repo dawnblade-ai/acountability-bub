@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_expenses: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          name: string
+          week_key: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          week_key: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          week_key?: string
+        }
+        Relationships: []
+      }
+      budget_sink_values: {
+        Row: {
+          amount: number | null
+          id: string
+          sink_id: string
+          week_key: string
+        }
+        Insert: {
+          amount?: number | null
+          id?: string
+          sink_id: string
+          week_key: string
+        }
+        Update: {
+          amount?: number | null
+          id?: string
+          sink_id?: string
+          week_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_sink_values_sink_id_fkey"
+            columns: ["sink_id"]
+            isOneToOne: false
+            referencedRelation: "budget_sinks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_sinks: {
+        Row: {
+          completed_week: string | null
+          created_at: string
+          created_week: string
+          id: string
+          name: string
+        }
+        Insert: {
+          completed_week?: string | null
+          created_at?: string
+          created_week: string
+          id?: string
+          name: string
+        }
+        Update: {
+          completed_week?: string | null
+          created_at?: string
+          created_week?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      budget_weeks: {
+        Row: {
+          income: number | null
+          updated_at: string
+          week_key: string
+        }
+        Insert: {
+          income?: number | null
+          updated_at?: string
+          week_key: string
+        }
+        Update: {
+          income?: number | null
+          updated_at?: string
+          week_key?: string
+        }
+        Relationships: []
+      }
       chores: {
         Row: {
           assignee: string
