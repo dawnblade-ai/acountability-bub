@@ -109,7 +109,7 @@ function BudgetPage() {
     }
     const ps = particlesRef.current;
     for (let i = ps.length - 1; i >= 0; i--) {
-      const p = ps[i];
+      const p = ps[i]!;
       p.vx *= 0.98; p.vy *= 0.98; p.vy += 0.05; p.x += p.vx; p.y += p.vy; p.alpha -= p.decay;
       ctx.globalAlpha = p.alpha;
       ctx.beginPath();
@@ -127,7 +127,7 @@ function BudgetPage() {
       const a = Math.random() * Math.PI * 2;
       const s = Math.random() * 5 + 2;
       particlesRef.current.push({
-        x, y, c: colors[Math.floor(Math.random() * colors.length)],
+        x, y, c: colors[Math.floor(Math.random() * colors.length)]!,
         r: Math.random() * 3 + 1,
         vx: Math.cos(a) * s, vy: Math.sin(a) * s,
         alpha: 1, decay: Math.random() * 0.015 + 0.01,
@@ -238,7 +238,7 @@ function BudgetPage() {
   }
 
   // Value resolution: local typing state wins, then server value
-  const incomeVal = localVals.income ?? (income != null ? String(income) : "");
+  const incomeVal = localVals["income"] ?? (income != null ? String(income) : "");
   const sinkInputVal = (id: string) => localVals[`sink_${id}`] ?? (sinkValFor(id) != null ? String(sinkValFor(id)) : "");
   const expInputVal = (e: Expense) => localVals[`exp_${e.id}`] ?? (e.amount != null ? String(e.amount) : "");
 
