@@ -173,7 +173,7 @@ function BudgetPage() {
     const past = sinkVals
       .filter((v) => v.sink_id === sinkId && v.week_key < weekKey)
       .reduce((sum, v) => sum + (Number(v.amount) || 0), 0);
-    const local = localVals[`sink_${sinkId}`];
+    const local = localVals[`${weekKey}_sink_${sinkId}`];
     const cur = local !== undefined ? parseFloat(local) || 0 : Number(sinkValFor(sinkId)) || 0;
     return past + cur;
   };
@@ -199,13 +199,13 @@ function BudgetPage() {
 
   // --- Mutations ---
   async function updateIncome(val: string) {
-    setLocalVals((p) => ({ ...p, income: val }));
+    setLocalVals((p) => ({ ...p, [`${weekKey}_income`]: val }));
     const num = val === "" ? null : parseFloat(val);
     await supabase.from("budget_weeks").upsert({ week_key: weekKey, income: num, updated_at: new Date().toISOString() });
   }
 
   async function updateSinkVal(sinkId: string, val: string) {
-    setLocalVals((p) => ({ ...p, [`sink_${sinkId}`]: val }));
+    setLocalVals((p) => ({ ...p, [`${weekKey}_sink_${sinkId}`]: val }));
     const num = val === "" ? null : parseFloat(val);
     await supabase.from("budget_sink_values").upsert(
       { week_key: weekKey, sink_id: sinkId, amount: num },
@@ -246,8 +246,8 @@ function BudgetPage() {
   }
 
   // Value resolution: local typing state wins, then server value
-  const incomeVal = localVals["income"] ?? (income != null ? String(income) : "");
-  const sinkInputVal = (id: string) => localVals[`sink_${id}`] ?? (sinkValFor(id) != null ? String(sinkValFor(id)) : "");
+  const incomeVal = localVals[`${weekKey}_income`] ?? (income != null ? String(income) : "");
+  const sinkInputVal = (id: string) => localVals[`${weekKey}_sink_${id}`] ?? (sinkValFor(id) != null ? String(sinkValFor(id)) : "");
   const expInputVal = (e: Expense) => localVals[`exp_${e.id}`] ?? (e.amount != null ? String(e.amount) : "");
 
   const weekLabel =
