@@ -8,6 +8,13 @@
       "when": 1790443352378,
       "tag": "0000_create_budget_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790898821568,
+      "tag": "0001_budget_history",
+      "breakpoints": true
     }
   ]
 }

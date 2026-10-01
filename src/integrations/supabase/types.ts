@@ -38,6 +38,24 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_history: {
+        Row: {
+          created_at: string
+          id: string
+          msg: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          msg: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          msg?: string
+        }
+        Relationships: []
+      }
       budget_sink_values: {
         Row: {
           amount: number | null

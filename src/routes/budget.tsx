@@ -19,6 +19,7 @@ export const Route = createFileRoute("/budget")({
 type Sink = { id: string; name: string; created_week: string; completed_week: string | null };
 type WeekRow = { week_key: string; income: number | null };
 type SinkVal = { id: string; week_key: string; sink_id: string; amount: number | null };
+type HistoryItem = { id: string; msg: string; created_at: string };
 type Expense = { id: string; week_key: string; name: string; amount: number | null };
 
 const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -55,6 +56,8 @@ function BudgetPage() {
   const [newType, setNewType] = useState<"expense" | "sink">("expense");
   const [newName, setNewName] = useState("");
   // Local input values so typing isn't interrupted by realtime refetches
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [localVals, setLocalVals] = useState<Record<string, string>>({});
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,12 +70,14 @@ function BudgetPage() {
   const weekKey = getISO(monday);
 
   const fetchAll = useCallback(async () => {
-    const [s, w, sv, e] = await Promise.all([
+    const [s, w, sv, e, h] = await Promise.all([
       supabase.from("budget_sinks").select("*").order("created_at"),
       supabase.from("budget_weeks").select("*"),
       supabase.from("budget_sink_values").select("*"),
       supabase.from("budget_expenses").select("*").order("created_at"),
+      supabase.from("budget_history").select("*").order("created_at", { ascending: false }).limit(100),
     ]);
+    if (h.data) setHistory(h.data);
     if (s.data) setSinks(s.data);
     if (w.data) setWeeks(Object.fromEntries(w.data.map((r) => [r.week_key, r])));
     if (sv.data) setSinkVals(sv.data);
@@ -87,11 +92,39 @@ function BudgetPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "budget_weeks" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "budget_sink_values" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "budget_expenses" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "budget_history" }, fetchAll)
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, [fetchAll]);
+
+  // --- Swipe right to open history, left to close ---
+  useEffect(() => {
+    let sx = 0, sy = 0;
+    const start = (e: TouchEvent) => { sx = e.changedTouches[0]!.screenX; sy = e.changedTouches[0]!.screenY; };
+    const end = (e: TouchEvent) => {
+      const dx = e.changedTouches[0]!.screenX - sx;
+      const dy = Math.abs(e.changedTouches[0]!.screenY - sy);
+      if (dy < 60) {
+        if (dx > 80) setHistoryOpen(true);
+        else if (dx < -80) setHistoryOpen(false);
+      }
+    };
+    document.addEventListener("touchstart", start, { passive: true });
+    document.addEventListener("touchend", end, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", start);
+      document.removeEventListener("touchend", end);
+    };
+  }, []);
+
+  async function logHistory(msg: string) {
+    await supabase.from("budget_history").insert({ msg });
+  }
+  function logInputChange(name: string, val: string) {
+    logHistory(`Updated ${name} to ${fmt.format(parseFloat(val) || 0)}`);
+  }
 
   // --- Fireworks engine ---
   const stopFireworks = useCallback(() => {
@@ -220,16 +253,22 @@ function BudgetPage() {
   }
 
   async function toggleSink(id: string, checked: boolean) {
+    const sink = sinks.find((x) => x.id === id);
+    if (sink) logHistory(`Marked '${sink.name}' as ${checked ? "Complete" : "Incomplete"}`);
     await supabase.from("budget_sinks").update({ completed_week: checked ? weekKey : null }).eq("id", id);
   }
 
   async function deleteSink(id: string) {
     if (confirm("Delete this sinking fund entirely?")) {
+      const sink = sinks.find((x) => x.id === id);
+      if (sink) logHistory(`Deleted Sinking Fund: '${sink.name}'`);
       await supabase.from("budget_sinks").delete().eq("id", id);
     }
   }
 
   async function deleteExp(id: string) {
+    const exp = expenses.find((x) => x.id === id);
+    if (exp) logHistory(`Deleted Expense: '${exp.name}'`);
     await supabase.from("budget_expenses").delete().eq("id", id);
   }
 
@@ -238,8 +277,10 @@ function BudgetPage() {
     if (!name) return;
     if (newType === "sink") {
       await supabase.from("budget_sinks").insert({ name, created_week: weekKey });
+      logHistory(`Created Sinking Fund: '${name}'`);
     } else {
       await supabase.from("budget_expenses").insert({ week_key: weekKey, name, amount: null });
+      logHistory(`Created Expense: '${name}'`);
     }
     setNewName("");
     setModalOpen(false);
@@ -267,8 +308,38 @@ function BudgetPage() {
       <style>{BUDGET_CSS}</style>
       <canvas ref={canvasRef} id="fireworks-canvas" />
 
+      {/* History Panel */}
+      <div className={`history-overlay ${historyOpen ? "open" : ""}`} onClick={() => setHistoryOpen(false)} />
+      <div className={`history-panel ${historyOpen ? "open" : ""}`}>
+        <div className="history-header">
+          <h2>Activity Log</h2>
+          <button className="close-history" onClick={() => setHistoryOpen(false)}>×</button>
+        </div>
+        <div className="history-content">
+          {history.length === 0 ? (
+            <div className="history-empty">No activity logged yet.<br />Add some expenses or swipe right!</div>
+          ) : (
+            history.map((h) => (
+              <div className="history-item" key={h.id}>
+                <span className="history-date">
+                  {new Date(h.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </span>
+                <span className="history-msg">{h.msg}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      <button className="history-fab" onClick={() => setHistoryOpen(true)} title="View History">🕒</button>
+
       <div className="budget-container">
         <Link to="/" className="back-link">← Back to Bub</Link>
+
+        {/* Grand Display */}
+        <div className={`grand-display ${grandClass}`}>
+          <div className="grand-label">{grandLabel}</div>
+          <div className="grand-amount">{fmt.format(Math.abs(remaining))}</div>
+        </div>
 
         {/* Week Navigation */}
         <div className="paycheck-nav">
@@ -278,12 +349,6 @@ function BudgetPage() {
             <span className="week-date">{dateRange}</span>
           </div>
           <button className="nav-btn" onClick={() => setOffset((o) => o + 1)}>→</button>
-        </div>
-
-        {/* Grand Display */}
-        <div className={`grand-display ${grandClass}`}>
-          <div className="grand-label">{grandLabel}</div>
-          <div className="grand-amount">{fmt.format(Math.abs(remaining))}</div>
         </div>
 
         {/* Income */}
@@ -296,6 +361,7 @@ function BudgetPage() {
               step="0.01"
               value={incomeVal}
               onChange={(e) => updateIncome(e.target.value)}
+              onBlur={(e) => logInputChange("Income", e.target.value)}
             />
           </div>
         </div>
@@ -325,6 +391,7 @@ function BudgetPage() {
                       placeholder="0.00"
                       value={sinkInputVal(s.id)}
                       onChange={(e) => updateSinkVal(s.id, e.target.value)}
+                      onBlur={(e) => logInputChange(s.name, e.target.value)}
                     />
                   </div>
                 </div>
@@ -363,6 +430,7 @@ function BudgetPage() {
                     placeholder="0.00"
                     value={expInputVal(e)}
                     onChange={(ev) => updateExpVal(e.id, ev.target.value)}
+                    onBlur={(ev) => logInputChange(e.name, ev.target.value)}
                   />
                 </div>
                 <button className="delete-btn" onClick={() => deleteExp(e.id)} style={{ fontSize: "1.5rem", padding: 10 }}>🗑</button>
@@ -430,9 +498,25 @@ const BUDGET_CSS = `
   display: flex; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .budget-page #fireworks-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+.budget-page { touch-action: pan-y; }
+.history-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1999; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(2px); }
+.history-overlay.open { opacity: 1; pointer-events: all; }
+.history-panel { position: fixed; top: 0; left: -100%; width: 85%; max-width: 350px; height: 100%; background: var(--bp-bg); z-index: 2000; box-shadow: 5px 0 25px rgba(0,0,0,0.15); transition: left 0.3s cubic-bezier(0.2,0.8,0.2,1); display: flex; flex-direction: column; }
+.history-panel.open { left: 0; }
+.history-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--bp-border); display: flex; justify-content: space-between; align-items: center; background: var(--bp-card); }
+.history-header h2 { margin: 0; font-size: 1.3rem; color: var(--bp-primary); }
+.close-history { background: none; border: none; font-size: 2rem; color: var(--bp-secondary); cursor: pointer; line-height: 1; }
+.history-content { padding: 1.5rem; overflow-y: auto; flex: 1; }
+.history-item { margin-bottom: 1.2rem; border-left: 2px solid var(--bp-border); padding-left: 12px; position: relative; }
+.history-item::before { content: ''; position: absolute; left: -6px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--bp-primary); border: 2px solid var(--bp-bg); }
+.history-date { display: block; font-size: 0.75rem; color: var(--bp-secondary); margin-bottom: 0.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.history-msg { font-size: 0.95rem; font-weight: 600; color: var(--bp-primary); line-height: 1.4; }
+.history-empty { text-align: center; color: var(--bp-secondary); font-size: 0.9rem; margin-top: 2rem; font-style: italic; }
+.history-fab { position: fixed; top: 1rem; left: 1rem; z-index: 100; background: var(--bp-card); border: 1px solid var(--bp-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
+.history-fab:active { transform: scale(0.9); background: var(--bp-border); }
 .budget-container { max-width: 500px; width: 100%; padding: 1rem; padding-bottom: 6rem; }
-.back-link { display: inline-block; margin-bottom: 0.75rem; color: var(--bp-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
-.grand-display { background: var(--bp-primary); color: white; text-align: center; padding: 2.5rem 1rem; border-radius: 20px; margin-bottom: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; overflow: hidden; transition: all 0.5s ease; }
+.back-link { display: inline-block; margin: 0.75rem 0 0.75rem 3.5rem; color: var(--bp-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+.grand-display { margin-top: 2.5rem; background: var(--bp-primary); color: white; text-align: center; padding: 2.5rem 1rem; border-radius: 20px; margin-bottom: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; overflow: hidden; transition: all 0.5s ease; }
 .grand-display.zero-sum { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); animation: pulse-glow 2s infinite; }
 .grand-display.danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
 @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); } 70% { box-shadow: 0 0 0 15px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
