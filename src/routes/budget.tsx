@@ -515,7 +515,7 @@ const BUDGET_CSS = `
 .history-fab { position: fixed; top: 1rem; left: 1rem; z-index: 100; background: var(--bp-card); border: 1px solid var(--bp-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
 .history-fab:active { transform: scale(0.9); background: var(--bp-border); }
 .budget-container { max-width: 500px; width: 100%; padding: 1rem; padding-bottom: 6rem; }
-.back-link { display: inline-block; margin-bottom: 0.75rem; color: var(--bp-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+.back-link { display: inline-block; margin: 0.75rem 0 0.75rem 3.5rem; color: var(--bp-secondary); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
 .grand-display { margin-top: 2.5rem; background: var(--bp-primary); color: white; text-align: center; padding: 2.5rem 1rem; border-radius: 20px; margin-bottom: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; overflow: hidden; transition: all 0.5s ease; }
 .grand-display.zero-sum { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); animation: pulse-glow 2s infinite; }
 .grand-display.danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
